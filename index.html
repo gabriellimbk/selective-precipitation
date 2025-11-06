@@ -14,7 +14,10 @@
 
   /* When not scaled (desktop >= design width), center the app */
   @media (min-width: 1100px){
-    #scaler{ margin:0 auto; left: auto; transform-origin: top center; }
+    /* Desktop: behave like the original page (no scaling wrapper effects) */
+    #scaleContainer{ height:auto; }
+    #scaler{ margin:0; left:auto; transform-origin: top center; }
+  }
   }
 
   /* Floating scroll helpers visible only when scaled (mobile) */
@@ -36,7 +39,7 @@
     - #scaler holds the "desktop" layout at its native width and is uniformly scaled.
   */
   #scaleContainer{ width:100%; touch-action: pan-y; }
-  #scaler{ width:var(--design-width); transform-origitransform-origin: top left;ve; left: 0; margin:0; }
+  #scaler{ width:var(--design-width); transform-origin: top left; position: relative; left: 0; margin:0; }
 
   header{text-align:center;padding:24px 20px 8px;
     background:linear-gradient(to bottom,#e8f4f8,#ffffff);
@@ -236,11 +239,20 @@
 
   function applyPageScale(){
     const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-    // Scale down uniformly to fit width, but never upscale beyond 1
-    const scale = Math.min(1, vw / DESIGN_WIDTH);
-    scaler.style.transform = 'scale(' + scale + ')';
+    if (vw >= DESIGN_WIDTH){
+      // DESKTOP: revert to original behavior
+      scaler.style.width = '100%';      // header spans full width
+      scaler.style.transform = 'none';  // no scaling
+      scaler.style.left = 'auto';
+      scaler.style.margin = '0';        // header full-bleed; inner .wrap still centers via its own max-width
+      scaleContainer.style.height = 'auto';
+      return;
+    }
 
-    // Anchor to the left to remove left-side blank space when scaled down
+    // MOBILE/TABLET: scale down uniformly from the left to remove left gutter
+    const scale = Math.min(1, vw / DESIGN_WIDTH);
+    scaler.style.width = DESIGN_WIDTH + 'px';
+    scaler.style.transform = 'scale(' + scale + ')';
     scaler.style.left = '0px';
 
     // Reserve the scaled height so the page scrolls naturally
