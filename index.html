@@ -3,16 +3,24 @@
 <head>
 <meta charset="utf-8" />
 <!-- Keep desktop proportions everywhere: disable pinch-zoom and scale the whole app to fit viewport -->
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, maximum-scale=5" />
 <title>Selective Precipitation Simulator</title>
 <style>
-  :root{
-    --bg:#ffffff; --panel:#f8f9fa; --ink:#000000; --muted:#6c757d;
-    --blue:#0066cc; --green:#00aa44; --red:#dc3545;
-    --border:#333333; --grey:#808080;
-    /* Desktop design width in pixels — the page is authored for this width */
-    --design-width: 1100px;
+  :root{$1}
+
+  /* Mobile-friendly scrolling and viewport behavior */
+  html, body { height: 100%; overflow-x: hidden; }
+  body { -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; touch-action: pan-y; }
+
+  /* When not scaled (desktop >= design width), center the app */
+  @media (min-width: 1100px){
+    #scaler{ margin:0 auto; left: auto; transform-origin: top center; }
   }
+
+  /* Floating scroll helpers visible only when scaled (mobile) */
+  .scroll-fabs{ position: fixed; right: 14px; bottom: 14px; display: grid; gap: 10px; z-index: 9999; }
+  .scroll-fabs button{ width:48px; height:48px; border-radius:50%; border:2px solid var(--border); background:var(--panel); box-shadow:0 4px 12px rgba(0,0,0,.15); font-size:22px; font-weight:700; cursor:pointer; }
+  @media (min-width: 1100px){ .scroll-fabs{ display:none; } }
 
   /* Prevent mobile auto-font scaling */
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -27,8 +35,8 @@
     - #scaleContainer reserves the scaled height to keep normal document flow.
     - #scaler holds the "desktop" layout at its native width and is uniformly scaled.
   */
-  #scaleContainer{ width:100%; }
-  #scaler{ width:var(--design-width); margin:0 auto; transform-origin: top center; }
+  #scaleContainer{ width:100%; touch-action: pan-y; }
+  #scaler{ width:var(--design-width); transform-origitransform-origin: top left;ve; left: 0; margin:0; }
 
   header{text-align:center;padding:24px 20px 8px;
     background:linear-gradient(to bottom,#e8f4f8,#ffffff);
@@ -213,6 +221,12 @@
     </div>
   </div>
 
+  <!-- Mobile scroll helpers -->
+  <div class="scroll-fabs" aria-hidden="true">
+    <button id="scrollUp" title="Scroll to top" aria-label="Scroll to top">↑</button>
+    <button id="scrollDown" title="Scroll to bottom" aria-label="Scroll to bottom">↓</button>
+  </div>
+
 <script>
 // ---- Proportional scale-to-fit (keeps desktop proportions on any screen) ----
 (function(){
@@ -222,12 +236,14 @@
 
   function applyPageScale(){
     const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-    // Uniform scale, never larger than 1 (desktop size). This keeps desktop look on phones/tablets.
+    // Scale down uniformly to fit width, but never upscale beyond 1
     const scale = Math.min(1, vw / DESIGN_WIDTH);
     scaler.style.transform = 'scale(' + scale + ')';
 
-    // Reserve the scaled height so the document can scroll normally.
-    // Use scrollHeight of unscaled content multiplied by scale.
+    // Anchor to the left to remove left-side blank space when scaled down
+    scaler.style.left = '0px';
+
+    // Reserve the scaled height so the page scrolls naturally
     const naturalHeight = scaler.scrollHeight;
     scaleContainer.style.height = (naturalHeight * scale) + 'px';
   }
@@ -235,7 +251,6 @@
   window.addEventListener('resize', applyPageScale, { passive: true });
   window.addEventListener('orientationchange', applyPageScale, { passive: true });
   document.addEventListener('DOMContentLoaded', applyPageScale);
-  // In case fonts/layout shift after load
   window.addEventListener('load', applyPageScale);
 })();
 
@@ -375,6 +390,15 @@ showBars.addEventListener('change', e=>{
 
 stepSlider.addEventListener('input',e=>apply(+e.target.value));
 apply(0);
+
+// Scroll helper buttons (mobile convenience)
+const upBtn = document.getElementById('scrollUp');
+const downBtn = document.getElementById('scrollDown');
+if (upBtn && downBtn){
+  const smooth = { behavior: 'smooth' };
+  upBtn.addEventListener('click', ()=>window.scrollTo({ top: 0, ...smooth }));
+  downBtn.addEventListener('click', ()=>window.scrollTo({ top: document.body.scrollHeight, ...smooth }));
+}
 </script>
 </body>
 </html>
