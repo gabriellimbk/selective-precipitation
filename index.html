@@ -2,30 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Selective Precipitation Simulator </title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<title>Selective Precipitation Simulator</title>
 <style>
 :root{
   --bg:#ffffff; --panel:#f8f9fa; --ink:#000000; --muted:#6c757d;
   --blue:#0066cc; --green:#00aa44; --red:#dc3545;
   --border:#333333; --grey:#808080;
+  --design-width:1100px;
 }
+
+/* Prevent sideways scrolling on mobile while we scale to fit */
+html, body { overflow-x: hidden; }
+
 *{box-sizing:border-box}
 body{
   margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
   background:var(--bg);color:var(--ink);
 }
+
+/* ---- SCALER: keeps proportions identical by scaling the entire stage ---- */
+#scaler{
+  transform-origin: top center;
+  width: var(--design-width);
+  margin: 0 auto;
+  /* height is set dynamically in JS to the scaled height */
+}
+
+/* The actual content lives inside #stage at the fixed design width */
+#stage{
+  width: var(--design-width);
+  margin: 0 auto;
+}
+
 header{text-align:center;padding:24px 20px 8px;
   background:linear-gradient(to bottom,#e8f4f8,#ffffff);
   border-bottom:4px solid var(--border);}
 header h1{margin:0;font-weight:800}
 header p{margin:.35rem 0 0;font-size:1.05rem}
 header .chem-eqn{margin-top:.4rem}
+
+/* Keep the original two-column layout; scaling preserves proportions on mobile */
 .wrap{
   max-width:1100px;margin:16px auto;padding:0 16px 24px;
   display:grid;grid-template-columns:420px 1fr;gap:18px;
 }
-@media(max-width:768px){.wrap{grid-template-columns:1fr}header h1{font-size:1.4rem}}
+
 .card{
   background:var(--panel);border:4px solid var(--border);border-radius:18px;
   padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.1);
@@ -80,15 +102,15 @@ input[type=range]{width:100%;accent-color:var(--blue);}
 /* Bars */
 .bars-wrap{padding:12px;background:#fff;border:2px solid var(--border);border-radius:8px;}
 
-/* NEW: single-line headline for both notes (same paragraph, left/right flush) */
+/* Headline for notes */
 .bar-headline{
   display:flex;
   align-items:center;
-  justify-content:space-between; /* left/right flush */
+  justify-content:space-between;
   gap:12px;
   font-weight:700;
   margin-bottom:6px;
-  min-height:1.4em; /* reserve space to prevent layout shift */
+  min-height:1.4em;
 }
 .bar-headline .left{white-space:nowrap;}
 .bar-headline .right{white-space:nowrap;}
@@ -98,7 +120,7 @@ input[type=range]{width:100%;accent-color:var(--blue);}
   height:360px;
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  align-items:end;  /* common bottom baseline */
+  align-items:end;
   gap:20px;
 }
 .bar{
@@ -115,7 +137,7 @@ input[type=range]{width:100%;accent-color:var(--blue);}
 #barSO4{background:rgba(0,170,68,0.2);border-color:var(--green);}
 #barConstCa{background:rgba(128,128,128,0.3);border-color:var(--grey);}
 
-/* Labels under bars: aligned per column (larger font) */
+/* Labels under bars */
 .bar-labels{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -123,83 +145,116 @@ input[type=range]{width:100%;accent-color:var(--blue);}
   text-align:center;
   margin-top:8px;
   font-weight:700;
-  font-size:1.15rem;          /* larger labels */
+  font-size:1.15rem;
   letter-spacing:.1px;
 }
-@media(max-width:768px){
-  .bars{height:280px}
-  .bar small{top:-18px;font-size:.85rem}
-  .bar-labels{font-size:1.05rem}
-  .bar-headline{font-size:.95rem}
-}
+
+/* IMPORTANT: Removed previous @media font/layout changes so proportions never shift.
+   Scaling handles responsiveness instead. */
 </style>
 </head>
 <body>
-<header>
-  <h1>• Selective Precipitation Simulator •</h1>
-  <p>What happens when solid Na₂SO₄ is added to a solution containing both Ca²⁺ and Hg²⁺?</p>
-  <p class="chem-eqn">Ca²⁺(aq) + SO₄²⁻(aq) ⇌ CaSO₄(s); K<sub>sp</sub> = 5.0 × 10⁻⁵</p>
-  <p class="chem-eqn">Hg²⁺(aq) + SO₄²⁻(aq) ⇌ HgSO₄(s); K<sub>sp</sub> = 6.8 × 10⁻⁵</p>
-</header>
 
-<div class="wrap">
-  <section class="card">
-    <h3>Add Na₂SO₄(s)</h3>
-    <div class="slider-block">
-      <div class="pill"><b id="nAdded">0.000</b> mol</div>
-      <input id="stepSlider" type="range" min="0" max="20" step="1" value="0"/>
+<!-- Scaled wrapper so everything fits on mobile without changing proportions -->
+<div id="scaler">
+  <div id="stage">
+    <header>
+      <h1>• Selective Precipitation Simulator •</h1>
+      <p>What happens when solid Na₂SO₄ is added to a solution containing both Ca²⁺ and Hg²⁺?</p>
+      <p class="chem-eqn">Ca²⁺(aq) + SO₄²⁻(aq) ⇌ CaSO₄(s); K<sub>sp</sub> = 5.0 × 10⁻⁵</p>
+      <p class="chem-eqn">Hg²⁺(aq) + SO₄²⁻(aq) ⇌ HgSO₄(s); K<sub>sp</sub> = 6.8 × 10⁻⁵</p>
+    </header>
+
+    <div class="wrap">
+      <section class="card">
+        <h3>Add Na₂SO₄(s)</h3>
+        <div class="slider-block">
+          <div class="pill"><b id="nAdded">0.000</b> mol</div>
+          <input id="stepSlider" type="range" min="0" max="20" step="1" value="0"/>
+        </div>
+
+        <div class="beaker">
+          <div class="b-labels">vol = 1 dm³<br>initial n Ca²⁺ = 0.010 mol<br>initial n Hg²⁺ = 0.005 mol</div>
+          <div id="precip" class="precip"></div>
+          <div id="pptLabel" class="ppt-label">CaSO₄(s)</div>
+        </div>
+
+        <div class="tracker">
+          <div class="grid">
+            <div><b>n Ca²⁺(aq)</b></div><div class="val" id="nCa">0.01000</div>
+            <div><b>n SO₄²⁻(aq)</b></div><div class="val" id="nSulf">0.00000</div>
+            <div><b>IP : [Ca²⁺][SO₄²⁻]</b></div><div class="val ip-ok" id="ipCa">0.00000</div>
+            <div><b>n CaSO₄(s)</b></div><div class="val" id="nSolid">0.00000</div>
+            <div><b>status (CaSO₄)</b></div><div class="sat ok" id="satCa">not saturated</div>
+          </div>
+          <hr>
+          <div class="grid">
+            <div><b>n Hg²⁺(aq)</b></div><div class="val" id="nHg">0.00500</div>
+            <div><b>IP : [Hg²⁺][SO₄²⁻]</b></div><div class="val ip-ok" id="ipHg">0.00000</div>
+            <div><b>status (HgSO₄)</b></div><div class="sat ok" id="satHg">not saturated</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <!-- Toggle for bar graph -->
+        <label class="toggle"><input id="showBars" type="checkbox" checked> Show bar graph</label>
+
+        <div id="barsWrap" class="bars-wrap">
+          <div class="bar-headline">
+            <span id="noteCa" class="left"></span>
+            <span id="noteHg" class="right"></span>
+          </div>
+
+          <div class="bars">
+            <div class="bar" id="barCa"><small id="barCaVal">0.01000 mol</small></div>
+            <div class="bar" id="barSO4"><small id="barSO4Val">0.00000 mol</small></div>
+            <div class="bar" id="barConstCa"><small id="barConstCaVal">0.00500 mol</small></div>
+          </div>
+
+          <div class="bar-labels">
+            <div style="color:var(--blue)">n Ca²⁺(aq)</div>
+            <div style="color:var(--green)">n SO₄²⁻(aq)</div>
+            <div style="color:var(--grey)">n Hg²⁺(aq)</div>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <div class="beaker">
-      <div class="b-labels">vol = 1 dm³<br>initial n Ca²⁺ = 0.010 mol<br>initial n Hg²⁺ = 0.005 mol</div> 
-      <div id="precip" class="precip"></div>
-      <div id="pptLabel" class="ppt-label">CaSO₄(s)</div>
-    </div>
-
-    <div class="tracker">
-      <div class="grid">
-        <div><b>n Ca²⁺(aq)</b></div><div class="val" id="nCa">0.01000</div>
-        <div><b>n SO₄²⁻(aq)</b></div><div class="val" id="nSulf">0.00000</div>
-        <div><b>IP : [Ca²⁺][SO₄²⁻]</b></div><div class="val ip-ok" id="ipCa">0.00000</div>
-        <div><b>n CaSO₄(s)</b></div><div class="val" id="nSolid">0.00000</div>
-        <div><b>status (CaSO₄)</b></div><div class="sat ok" id="satCa">not saturated</div>
-      </div>
-      <hr>
-      <div class="grid">
-        <div><b>n Hg²⁺(aq)</b></div><div class="val" id="nHg">0.00500</div>
-        <div><b>IP : [Hg²⁺][SO₄²⁻]</b></div><div class="val ip-ok" id="ipHg">0.00000</div>
-        <div><b>status (HgSO₄)</b></div><div class="sat ok" id="satHg">not saturated</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <!-- Toggle for bar graph -->
-    <label class="toggle"><input id="showBars" type="checkbox" checked> Show bar graph</label>
-
-    <div id="barsWrap" class="bars-wrap">
-      <!-- NEW: single-line, left/right-flushed notes (same paragraph) -->
-      <div class="bar-headline">
-        <span id="noteCa" class="left"></span>
-        <span id="noteHg" class="right"></span>
-      </div>
-
-      <div class="bars">
-        <div class="bar" id="barCa"><small id="barCaVal">0.01000 mol</small></div>
-        <div class="bar" id="barSO4"><small id="barSO4Val">0.00000 mol</small></div>
-        <div class="bar" id="barConstCa"><small id="barConstCaVal">0.00500 mol</small></div>
-      </div>
-
-      <div class="bar-labels">
-        <div style="color:var(--blue)">n Ca²⁺(aq)</div>
-        <div style="color:var(--green)">n SO₄²⁻(aq)</div>
-        <div style="color:var(--grey)">n Hg²⁺(aq)</div>
-      </div>
-    </div>
-  </section>
+  </div>
 </div>
 
 <script>
+/* ---------- SCALE TO FIT (keeps proportions identical) ---------- */
+(function(){
+  const DESIGN = 1100; // px, matches CSS --design-width
+  const scaler = document.getElementById('scaler');
+  const stage  = document.getElementById('stage');
+
+  function rescale(){
+    // leave a little padding so it never touches screen edges
+    const viewportW = window.innerWidth;
+    const pad = 16; // px
+    const scale = Math.min(1, (viewportW - pad) / DESIGN);
+
+    // Apply scale to wrapper, and set its height to the scaled stage height
+    scaler.style.transform = `scale(${scale})`;
+    // Use offsetHeight (unscaled) then multiply to reserve correct layout space
+    const unscaledH = stage.offsetHeight;
+    scaler.style.height = (unscaledH * scale) + 'px';
+  }
+
+  // Recalculate after content paints and on resize/orientation change
+  window.addEventListener('load', rescale);
+  window.addEventListener('resize', rescale);
+  window.addEventListener('orientationchange', rescale);
+
+  // If fonts load later and change height, adjust once more
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(rescale);
+  }
+})();
+
+/* ---------- ORIGINAL APP LOGIC (unchanged) ---------- */
 const DATA = [
   {added:0.000,nCa:0.01000,nSO4:0.00000,nSolid:0.00000,ip:0.00000,sat:false,nHg:0.00500,ipHg:0.000000,satHg:false},
   {added:0.001,nCa:0.01000,nSO4:0.00100,nSolid:0.00000,ip:0.00001,sat:false,nHg:0.00500,ipHg:0.000005,satHg:false},
@@ -334,7 +389,7 @@ function apply(idx){
   // Bars
   setBars(d.nCa,d.nSO4);
 
-  // Single-line, left/right-flushed notes
+  // Notes
   setNotes(d.added);
 }
 
@@ -343,6 +398,7 @@ showBars.addEventListener('change', e=>{
   barsWrap.style.display = e.target.checked ? 'block' : 'none';
 });
 
+const stepSlider=document.getElementById('stepSlider');
 stepSlider.addEventListener('input',e=>apply(+e.target.value));
 apply(0);
 </script>
