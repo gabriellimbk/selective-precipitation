@@ -2,158 +2,76 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<!-- Keep desktop proportions everywhere: disable pinch-zoom and scale the whole app to fit viewport -->
+<!-- Allow pinch-zoom; keep desktop proportions via scale wrapper -->
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, maximum-scale=5" />
 <title>Selective Precipitation Simulator</title>
 <style>
-  :root{$1}
-
-  /* Mobile-friendly scrolling and viewport behavior */
-  html, body { height: 100%; overflow-x: hidden; }
-  body { -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; touch-action: pan-y; }
-
-  /* When not scaled (desktop >= design width), center the app */
-  @media (min-width: 1100px){
-    /* Desktop: behave like the original page (no scaling wrapper effects) */
-    #scaleContainer{ height:auto; }
-    #scaler{ margin:0; left:auto; transform-origin: top center; }
+  :root{
+    --bg:#ffffff; --panel:#f8f9fa; --ink:#000000; --muted:#6c757d;
+    --blue:#0066cc; --green:#00aa44; --red:#dc3545;
+    --border:#333333; --grey:#808080;
+    --design-width: 1100px;
   }
-  }
-
-  /* Floating scroll helpers visible only when scaled (mobile) */
-  .scroll-fabs{ position: fixed; right: 14px; bottom: 14px; display: grid; gap: 10px; z-index: 9999; }
-  .scroll-fabs button{ width:48px; height:48px; border-radius:50%; border:2px solid var(--border); background:var(--panel); box-shadow:0 4px 12px rgba(0,0,0,.15); font-size:22px; font-weight:700; cursor:pointer; }
-  @media (min-width: 1100px){ .scroll-fabs{ display:none; } }
-
-  /* Prevent mobile auto-font scaling */
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   *{box-sizing:border-box}
-  body{
-    margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-    background:var(--bg);color:var(--ink);
+  body{ margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg);color:var(--ink); }
+
+  /* SCALE LAYOUT */
+  #scaleContainer{ width:100%; touch-action: pan-y; }
+  #scaler{ width:var(--design-width); transform-origin: top left; }
+  @media (min-width: 1100px){
+    /* Desktop: identical to original (no scaling, centered header visuals) */
+    #scaler{ transform:none; width:100%; transform-origin: top center; }
   }
 
-  /*
-    SCALING LAYOUT
-    - #scaleContainer reserves the scaled height to keep normal document flow.
-    - #scaler holds the "desktop" layout at its native width and is uniformly scaled.
-  */
-  #scaleContainer{ width:100%; touch-action: pan-y; }
-  #scaler{ width:var(--design-width); transform-origin: top left; position: relative; left: 0; margin:0; }
-
-  header{text-align:center;padding:24px 20px 8px;
-    background:linear-gradient(to bottom,#e8f4f8,#ffffff);
-    border-bottom:4px solid var(--border);}
+  header{text-align:center;padding:24px 20px 8px; background:linear-gradient(to bottom,#e8f4f8,#ffffff); border-bottom:4px solid var(--border);} 
   header h1{margin:0;font-weight:800}
   header p{margin:.35rem 0 0;font-size:1.05rem}
   header .chem-eqn{margin-top:.4rem}
 
-  .wrap{
-    max-width:var(--design-width);margin:16px auto;padding:0 16px 24px;
-    display:grid;grid-template-columns:420px 1fr;gap:18px;
-  }
+  .wrap{ max-width:var(--design-width);margin:16px auto;padding:0 16px 24px; display:grid;grid-template-columns:420px 1fr;gap:18px; }
 
-  .card{
-    background:var(--panel);border:4px solid var(--border);border-radius:18px;
-    padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.1);
-  }
-  .pill{
-    display:inline-flex;align-items:center;gap:.4rem;background:#e6f2ff;
-    border:2px solid var(--blue);color:var(--blue);
-    padding:.3rem .6rem;border-radius:999px;font-weight:600;
-  }
+  .card{ background:var(--panel);border:4px solid var(--border);border-radius:18px; padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.1); }
+  .pill{ display:inline-flex;align-items:center;gap:.4rem;background:#e6f2ff; border:2px solid var(--blue);color:var(--blue); padding:.3rem .6rem;border-radius:999px;font-weight:600; }
   input[type=range]{width:100%;accent-color:var(--blue);} 
 
-  /* Simple toggle styling */
   .toggle{display:flex;align-items:center;gap:.5rem;font-weight:700;margin-bottom:8px;}
   .toggle input{accent-color:var(--blue);} 
 
   /* Beaker & precipitate */
-  .beaker{
-    --w:210px;width:var(--w);height:220px;border:4px solid var(--blue);
-    border-bottom-left-radius:12px;border-bottom-right-radius:12px;
-    position:relative;margin:8px auto;
-    background:linear-gradient(to bottom,#e6f7ff,#cceeff);
-  }
+  .beaker{ --w:210px;width:var(--w);height:205px;border:4px solid var(--blue);
+    border-bottom-left-radius:12px;border-bottom-right-radius:12px; position:relative;margin:8px auto; background:linear-gradient(to bottom,#e6f7ff,#cceeff); padding:12px 8px 64px; }
+  .b-labels{font-weight:600; line-height:1.25; text-align:center;}
 
-  .precip{
-    position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
-    background:#fff;border:2px solid var(--red);
-    border-radius:14px 14px 8px 8px/18px 18px 10px 10px;
-    display:none;width:10px;height:6px;transition:all .25s ease-in-out;
-    box-shadow:0 0 8px rgba(220,53,69,.25), 0 2px 0 rgba(0,0,0,.06) inset;
-  }
+  .precip{ position:absolute;bottom:10px;left:50%;transform:translateX(-50%); background:#fff;border:2px solid var(--red); border-radius:14px 14px 8px 8px/18px 18px 10px 10px; display:none;width:10px;height:6px;transition:all .25s ease-in-out; box-shadow:0 0 8px rgba(220,53,69,.25), 0 2px 0 rgba(0,0,0,.06) inset; }
   .precip.show{display:block}
 
-  /* Plain text label (no border or fill) */
-  .ppt-label{
-    position:absolute;left:50%;transform:translateX(-50%);
-    display:none;align-items:center;font-size:.9rem;
-    color:var(--red);font-weight:700;pointer-events:none;
-    transition:opacity .25s ease-in-out;
-  }
+  .ppt-label{ position:absolute;left:50%;transform:translateX(-50%); display:none;align-items:center;font-size:.9rem; color:var(--red);font-weight:700;pointer-events:none; transition:opacity .25s ease-in-out; }
   .ppt-label.show{display:flex;opacity:1}
 
-  /* Tracker */
   .tracker{margin-top:8px;padding:12px;background:#fff;border:2px solid var(--border);border-radius:8px;}
   .grid{display:grid;grid-template-columns:1fr max-content;row-gap:6px;column-gap:10px;align-items:center;}
   .val{padding:.2rem .45rem;border:2px solid var(--muted);border-radius:8px;min-width:8.8ch;text-align:right;font-weight:600;}
-  .sat.ok{background:#d4f4dd;border:2px solid var(--green);color:var(--green);} 
-  .sat.bad{background:#ffeeee;border:2px solid var(--red);color:var(--red);} 
-  .ip-ok{background:#d4f4dd;border:2px solid var(--green);color:var(--green);} 
-  .ip-bad{background:#ffeeee;border:2px solid var(--red);color:var(--red);} 
+  /* BRIGHTER STATES */
+  .sat.ok{background:#ccffdb;border:2px solid #00c853;color:#00a944;} 
+  .sat.bad{background:#ffe0e6;border:2px solid #ff1744;color:#ff1744;} 
+  .ip-ok{background:#ccffdb;border:2px solid #00c853;color:#00a944;} 
+  .ip-bad{background:#ffe0e6;border:2px solid #ff1744;color:#ff1744;} 
 
-  /* Bars */
   .bars-wrap{padding:12px;background:#fff;border:2px solid var(--border);border-radius:8px;}
-
-  /* Single-line headline for both notes (same paragraph, left/right flush) */
-  .bar-headline{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    font-weight:700;
-    margin-bottom:6px;
-    min-height:1.4em; 
-  }
+  .bar-headline{ display:flex; align-items:center; justify-content:space-between; gap:12px; font-weight:700; margin-bottom:6px; min-height:1.4em; }
   .bar-headline .left{white-space:nowrap;}
   .bar-headline .right{white-space:nowrap;}
   .bar-headline .red{color:var(--red);} 
 
-  .bars{
-    height:360px;
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    align-items:end;
-    gap:20px;
-  }
-  .bar{
-    width:60%;
-    justify-self:center;
-    border-radius:12px 12px 0 0;
-    position:relative;box-shadow:0 2px 8px rgba(0,0,0,.15);border:2px solid;
-  }
-  .bar small{
-    position:absolute;top:-22px;left:50%;transform:translateX(-50%);
-    font-weight:600;white-space:nowrap;
-  }
+  .bars{ height:360px; display:grid; grid-template-columns:repeat(3,1fr); align-items:end; gap:20px; }
+  .bar{ width:60%; justify-self:center; border-radius:12px 12px 0 0; position:relative;box-shadow:0 2px 8px rgba(0,0,0,.15);border:2px solid; }
+  .bar small{ position:absolute;top:-22px;left:50%;transform:translateX(-50%); font-weight:600;white-space:nowrap; }
   #barCa{background:rgba(0,102,204,0.2);border-color:var(--blue);} 
   #barSO4{background:rgba(0,170,68,0.2);border-color:var(--green);} 
   #barConstCa{background:rgba(128,128,128,0.3);border-color:var(--grey);} 
 
-  /* Labels under bars */
-  .bar-labels{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    justify-items:center;
-    text-align:center;
-    margin-top:8px;
-    font-weight:700;
-    font-size:1.15rem; 
-    letter-spacing:.1px;
-  }
-
-  /* IMPORTANT: remove the prior mobile @media overrides so the layout stays identical */
+  .bar-labels{ display:grid; grid-template-columns:repeat(3,1fr); justify-items:center; text-align:center; margin-top:8px; font-weight:700; font-size:1.15rem; letter-spacing:.1px; }
 </style>
 </head>
 <body>
@@ -198,21 +116,17 @@
         </section>
 
         <section class="card">
-          <!-- Toggle for bar graph -->
           <label class="toggle"><input id="showBars" type="checkbox" checked> Show bar graph</label>
-
           <div id="barsWrap" class="bars-wrap">
             <div class="bar-headline">
               <span id="noteCa" class="left"></span>
               <span id="noteHg" class="right"></span>
             </div>
-
             <div class="bars">
               <div class="bar" id="barCa"><small id="barCaVal">0.01000 mol</small></div>
               <div class="bar" id="barSO4"><small id="barSO4Val">0.00000 mol</small></div>
               <div class="bar" id="barConstCa"><small id="barConstCaVal">0.00500 mol</small></div>
             </div>
-
             <div class="bar-labels">
               <div style="color:var(--blue)">n Ca²⁺(aq)</div>
               <div style="color:var(--green)">n SO₄²⁻(aq)</div>
@@ -224,14 +138,8 @@
     </div>
   </div>
 
-  <!-- Mobile scroll helpers -->
-  <div class="scroll-fabs" aria-hidden="true">
-    <button id="scrollUp" title="Scroll to top" aria-label="Scroll to top">↑</button>
-    <button id="scrollDown" title="Scroll to bottom" aria-label="Scroll to bottom">↓</button>
-  </div>
-
 <script>
-// ---- Proportional scale-to-fit (keeps desktop proportions on any screen) ----
+// ---- Scale-to-fit for mobile; desktop renders unscaled ----
 (function(){
   const DESIGN_WIDTH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--design-width')) || 1100;
   const scaleContainer = document.getElementById('scaleContainer');
@@ -240,22 +148,16 @@
   function applyPageScale(){
     const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
     if (vw >= DESIGN_WIDTH){
-      // DESKTOP: revert to original behavior
-      scaler.style.width = '100%';      // header spans full width
-      scaler.style.transform = 'none';  // no scaling
-      scaler.style.left = 'auto';
-      scaler.style.margin = '0';        // header full-bleed; inner .wrap still centers via its own max-width
+      // Desktop: no scaling; natural height
+      scaler.style.transform = 'none';
+      scaler.style.width = '100%';
       scaleContainer.style.height = 'auto';
       return;
     }
-
-    // MOBILE/TABLET: scale down uniformly from the left to remove left gutter
+    // Mobile: uniform scale anchored to left to avoid blank gutter
     const scale = Math.min(1, vw / DESIGN_WIDTH);
     scaler.style.width = DESIGN_WIDTH + 'px';
     scaler.style.transform = 'scale(' + scale + ')';
-    scaler.style.left = '0px';
-
-    // Reserve the scaled height so the page scrolls naturally
     const naturalHeight = scaler.scrollHeight;
     scaleContainer.style.height = (naturalHeight * scale) + 'px';
   }
@@ -266,7 +168,7 @@
   window.addEventListener('load', applyPageScale);
 })();
 
-// ---- ORIGINAL APP LOGIC (unchanged) ----
+// ---- ORIGINAL APP LOGIC (kept intact) ----
 const DATA = [
   {added:0.000,nCa:0.01000,nSO4:0.00000,nSolid:0.00000,ip:0.00000,sat:false,nHg:0.00500,ipHg:0.000000,satHg:false},
   {added:0.001,nCa:0.01000,nSO4:0.00100,nSolid:0.00000,ip:0.00001,sat:false,nHg:0.00500,ipHg:0.000005,satHg:false},
@@ -334,14 +236,20 @@ function setBars(v1,v2){
 
 function setPrecipitate(nSolid){
   const frac = Math.max(0, Math.min(1, nSolid / MAX_SOLID));
+  const beaker = document.querySelector('.beaker');
+  const beakerH = beaker ? beaker.clientHeight : 205;
+  const maxPptH = Math.max(30, beakerH * 0.52);
   if (frac > 0.00001){
     const width = 28 + frac * 120;
-    const height = 10 + frac * 52;
+    const height = Math.min(10 + frac * 52, maxPptH);
     precip.style.width = width + 'px';
     precip.style.height = height + 'px';
     precip.classList.add('show');
 
-    const labelBottom = 10 + height + 8;
+    const safeTopGap = 80; // px headroom for beaker text
+    const desiredBottom = 10 + height + 8;
+    const maxBottom = Math.max(10, beakerH - safeTopGap);
+    const labelBottom = Math.min(desiredBottom, maxBottom);
     pptLabel.style.bottom = labelBottom + 'px';
     pptLabel.classList.add('show');
   }else{
@@ -356,19 +264,10 @@ function setNotes(added){
   noteCa.className = 'left';
   noteHg.className = 'right';
   const EPS = 1e-12;
-  if (added <= 0.004 + EPS){
-    noteCa.textContent = '[Ca²⁺][SO₄²⁻] < 5.0 × 10⁻⁵';
-  } else if (added >= 0.005 - EPS && added <= 0.020 + EPS){
-    noteCa.textContent = '[Ca²⁺][SO₄²⁻] = 5.0 × 10⁻⁵';
-    noteCa.classList.add('red');
-  }
-  if (added <= 0.019 + EPS){
-    noteHg.textContent = '[Hg²⁺][SO₄²⁻] < 6.8 × 10⁻⁵';
-  }
-  if (Math.abs(added - 0.020) <= EPS){
-    noteHg.textContent = '[Hg²⁺][SO₄²⁻] = 6.8 × 10⁻⁵';
-    noteHg.classList.add('red');
-  }
+  if (added <= 0.004 + EPS){ noteCa.textContent = '[Ca²⁺][SO₄²⁻] < 5.0 × 10⁻⁵'; }
+  else if (added >= 0.005 - EPS && added <= 0.020 + EPS){ noteCa.textContent = '[Ca²⁺][SO₄²⁻] = 5.0 × 10⁻⁵'; noteCa.classList.add('red'); }
+  if (added <= 0.019 + EPS){ noteHg.textContent = '[Hg²⁺][SO₄²⁻] < 6.8 × 10⁻⁵'; }
+  if (Math.abs(added - 0.020) <= EPS){ noteHg.textContent = '[Hg²⁺][SO₄²⁻] = 6.8 × 10⁻⁵'; noteHg.classList.add('red'); }
 }
 
 function apply(idx){
@@ -395,22 +294,12 @@ function apply(idx){
 
 showBars.addEventListener('change', e=>{
   barsWrap.style.display = e.target.checked ? 'block' : 'none';
-  // Recompute reserved height because content height changed
-  // (call the scaling function indirectly by dispatching a resize)
+  // Recompute reserved height when content height changes
   window.dispatchEvent(new Event('resize'));
 });
 
 stepSlider.addEventListener('input',e=>apply(+e.target.value));
 apply(0);
-
-// Scroll helper buttons (mobile convenience)
-const upBtn = document.getElementById('scrollUp');
-const downBtn = document.getElementById('scrollDown');
-if (upBtn && downBtn){
-  const smooth = { behavior: 'smooth' };
-  upBtn.addEventListener('click', ()=>window.scrollTo({ top: 0, ...smooth }));
-  downBtn.addEventListener('click', ()=>window.scrollTo({ top: document.body.scrollHeight, ...smooth }));
-}
 </script>
 </body>
 </html>
