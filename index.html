@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"
+/>
 <title>Selective Precipitation Simulator</title>
 <style>
 :root{
@@ -12,29 +15,26 @@
   --design-width:1100px;
 }
 
-/* Prevent sideways scrolling on mobile while we scale to fit */
 html, body { overflow-x: hidden; }
-
 *{box-sizing:border-box}
 body{
   margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
   background:var(--bg);color:var(--ink);
 }
 
-/* ---- SCALER: keeps proportions identical by scaling the entire stage ---- */
+/* ---- Scaler: makes the entire UI smaller on phones, preserving proportions ---- */
 #scaler{
   transform-origin: top center;
   width: var(--design-width);
   margin: 0 auto;
-  /* height is set dynamically in JS to the scaled height */
+  /* height is set via JS to reserve layout space equal to the scaled content */
 }
-
-/* The actual content lives inside #stage at the fixed design width */
 #stage{
   width: var(--design-width);
   margin: 0 auto;
 }
 
+/* -------- ORIGINAL STYLES (unchanged) -------- */
 header{text-align:center;padding:24px 20px 8px;
   background:linear-gradient(to bottom,#e8f4f8,#ffffff);
   border-bottom:4px solid var(--border);}
@@ -42,7 +42,6 @@ header h1{margin:0;font-weight:800}
 header p{margin:.35rem 0 0;font-size:1.05rem}
 header .chem-eqn{margin-top:.4rem}
 
-/* Keep the original two-column layout; scaling preserves proportions on mobile */
 .wrap{
   max-width:1100px;margin:16px auto;padding:0 16px 24px;
   display:grid;grid-template-columns:420px 1fr;gap:18px;
@@ -59,19 +58,15 @@ header .chem-eqn{margin-top:.4rem}
 }
 input[type=range]{width:100%;accent-color:var(--blue);}
 
-/* Simple toggle styling */
 .toggle{display:flex;align-items:center;gap:.5rem;font-weight:700;margin-bottom:8px;}
 .toggle input{accent-color:var(--blue);}
 
-/* Beaker & precipitate */
 .beaker{
   --w:210px;width:var(--w);height:220px;border:4px solid var(--blue);
   border-bottom-left-radius:12px;border-bottom-right-radius:12px;
   position:relative;margin:8px auto;
   background:linear-gradient(to bottom,#e6f7ff,#cceeff);
 }
-/* (horizontal line removed) */
-
 .precip{
   position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
   background:#fff;border:2px solid var(--red);
@@ -80,8 +75,6 @@ input[type=range]{width:100%;accent-color:var(--blue);}
   box-shadow:0 0 8px rgba(220,53,69,.25), 0 2px 0 rgba(0,0,0,.06) inset;
 }
 .precip.show{display:block}
-
-/* Plain text label (no border or fill) */
 .ppt-label{
   position:absolute;left:50%;transform:translateX(-50%);
   display:none;align-items:center;font-size:.9rem;
@@ -89,6 +82,10 @@ input[type=range]{width:100%;accent-color:var(--blue);}
   transition:opacity .25s ease-in-out;
 }
 .ppt-label.show{display:flex;opacity:1}
+
+/* small helper for beaker labels (from your original) */
+.b-labels{position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  text-align:center;font-weight:600;color:#000;}
 
 /* Tracker */
 .tracker{margin-top:8px;padding:12px;background:#fff;border:2px solid var(--border);border-radius:8px;}
@@ -101,32 +98,20 @@ input[type=range]{width:100%;accent-color:var(--blue);}
 
 /* Bars */
 .bars-wrap{padding:12px;background:#fff;border:2px solid var(--border);border-radius:8px;}
-
-/* Headline for notes */
 .bar-headline{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  font-weight:700;
-  margin-bottom:6px;
-  min-height:1.4em;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-weight:700;margin-bottom:6px;min-height:1.4em;
 }
 .bar-headline .left{white-space:nowrap;}
 .bar-headline .right{white-space:nowrap;}
 .bar-headline .red{color:var(--red);}
 
 .bars{
-  height:360px;
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  align-items:end;
-  gap:20px;
+  height:360px;display:grid;grid-template-columns:repeat(3,1fr);
+  align-items:end;gap:20px;
 }
 .bar{
-  width:60%;
-  justify-self:center;
-  border-radius:12px 12px 0 0;
+  width:60%;justify-self:center;border-radius:12px 12px 0 0;
   position:relative;box-shadow:0 2px 8px rgba(0,0,0,.15);border:2px solid;
 }
 .bar small{
@@ -137,25 +122,16 @@ input[type=range]{width:100%;accent-color:var(--blue);}
 #barSO4{background:rgba(0,170,68,0.2);border-color:var(--green);}
 #barConstCa{background:rgba(128,128,128,0.3);border-color:var(--grey);}
 
-/* Labels under bars */
 .bar-labels{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  justify-items:center;
-  text-align:center;
-  margin-top:8px;
-  font-weight:700;
-  font-size:1.15rem;
-  letter-spacing:.1px;
+  display:grid;grid-template-columns:repeat(3,1fr);
+  justify-items:center;text-align:center;margin-top:8px;
+  font-weight:700;font-size:1.15rem;letter-spacing:.1px;
 }
 
-/* IMPORTANT: Removed previous @media font/layout changes so proportions never shift.
-   Scaling handles responsiveness instead. */
+/* No media overrides—scaling handles responsiveness to preserve proportions */
 </style>
 </head>
 <body>
-
-<!-- Scaled wrapper so everything fits on mobile without changing proportions -->
 <div id="scaler">
   <div id="stage">
     <header>
@@ -197,7 +173,6 @@ input[type=range]{width:100%;accent-color:var(--blue);}
       </section>
 
       <section class="card">
-        <!-- Toggle for bar graph -->
         <label class="toggle"><input id="showBars" type="checkbox" checked> Show bar graph</label>
 
         <div id="barsWrap" class="bars-wrap">
@@ -224,31 +199,34 @@ input[type=range]{width:100%;accent-color:var(--blue);}
 </div>
 
 <script>
-/* ---------- SCALE TO FIT (keeps proportions identical) ---------- */
+/* ---------- SCALE-TO-FIT (keeps proportions identical) ---------- */
 (function(){
-  const DESIGN = 1100; // px, matches CSS --design-width
+  const DESIGN = 1100; // px (matches CSS --design-width)
   const scaler = document.getElementById('scaler');
   const stage  = document.getElementById('stage');
 
   function rescale(){
-    // leave a little padding so it never touches screen edges
-    const viewportW = window.innerWidth;
-    const pad = 16; // px
-    const scale = Math.min(1, (viewportW - pad) / DESIGN);
+    const viewportW = Math.max(320, window.innerWidth || document.documentElement.clientWidth || 320);
+    const pad = 16; // breathing room so content never touches edges
+    const raw = (viewportW - pad) / DESIGN;
+    const scale = Math.max(0.1, Math.min(1, raw)); // clamp to [0.1, 1]
 
-    // Apply scale to wrapper, and set its height to the scaled stage height
-    scaler.style.transform = `scale(${scale})`;
-    // Use offsetHeight (unscaled) then multiply to reserve correct layout space
-    const unscaledH = stage.offsetHeight;
-    scaler.style.height = (unscaledH * scale) + 'px';
+    // Apply scale and reserve the correct space
+    scaler.style.transform = 'scale(' + scale + ')';
+
+    // Use requestAnimationFrame to ensure height after layout
+    window.requestAnimationFrame(() => {
+      const unscaledH = stage.offsetHeight; // true, unscaled height
+      scaler.style.height = (unscaledH * scale) + 'px';
+    });
   }
 
-  // Recalculate after content paints and on resize/orientation change
-  window.addEventListener('load', rescale);
-  window.addEventListener('resize', rescale);
-  window.addEventListener('orientationchange', rescale);
+  // Recalculate after load and on any viewport change
+  window.addEventListener('load', rescale, { passive: true });
+  window.addEventListener('resize', rescale, { passive: true });
+  window.addEventListener('orientationchange', rescale, { passive: true });
 
-  // If fonts load later and change height, adjust once more
+  // In case fonts load later and change height
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(rescale);
   }
@@ -298,8 +276,8 @@ const barCaVal=document.getElementById('barCaVal');
 const barSO4Val=document.getElementById('barSO4Val');
 const barConstCaVal=document.getElementById('barConstCaVal');
 
-const noteCa=document.getElementById('noteCa');   // left (Ca)
-const noteHg=document.getElementById('noteHg');   // right (Hg)
+const noteCa=document.getElementById('noteCa');
+const noteHg=document.getElementById('noteHg');
 
 const barsWrap=document.getElementById('barsWrap');
 const showBars=document.getElementById('showBars');
@@ -339,7 +317,6 @@ function setPrecipitate(nSolid){
 }
 
 function setNotes(added){
-  // clear
   noteCa.textContent = '';
   noteHg.textContent = '';
   noteCa.className = 'left';
@@ -347,7 +324,6 @@ function setNotes(added){
 
   const EPS = 1e-12;
 
-  // Ca note (left)
   if (added <= 0.004 + EPS){
     noteCa.textContent = '[Ca²⁺][SO₄²⁻] < 5.0 × 10⁻⁵';
   } else if (added >= 0.005 - EPS && added <= 0.020 + EPS){
@@ -355,7 +331,6 @@ function setNotes(added){
     noteCa.classList.add('red');
   }
 
-  // Hg note (right)
   if (added <= 0.019 + EPS){
     noteHg.textContent = '[Hg²⁺][SO₄²⁻] < 6.8 × 10⁻⁵';
   }
@@ -375,7 +350,6 @@ function apply(idx){
   nHg.textContent=d.nHg.toFixed(5);
   ipHg.textContent=d.ipHg.toFixed(6);
 
-  // IP + Status sync
   ipCa.className=d.sat?'val ip-bad':'val ip-ok';
   satCa.className=d.sat?'sat bad':'sat ok';
   satCa.textContent=d.sat?'saturated':'not saturated';
@@ -383,23 +357,16 @@ function apply(idx){
   satHg.className=d.satHg?'sat bad':'sat ok';
   satHg.textContent=d.satHg?'saturated':'not saturated';
 
-  // Precipitate proportional scaling + plain label
   setPrecipitate(d.nSolid);
-
-  // Bars
   setBars(d.nCa,d.nSO4);
-
-  // Notes
   setNotes(d.added);
 }
 
-// Toggle behavior
 showBars.addEventListener('change', e=>{
   barsWrap.style.display = e.target.checked ? 'block' : 'none';
 });
 
-const stepSlider=document.getElementById('stepSlider');
-stepSlider.addEventListener('input',e=>apply(+e.target.value));
+stepSlider.addEventListener('input', e=>apply(+e.target.value));
 apply(0);
 </script>
 </body>
